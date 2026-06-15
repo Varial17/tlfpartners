@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/*
+  TLF Partners brand tokens (PRD §9b).
+  Defined once here so the whole app themes consistently.
+*/
+@theme {
+  --color-navy: #19333a; /* primary navy / dark teal */
+  --color-navy-700: #244750;
+  --color-orange: #faa61a; /* accent */
+  --color-orange-600: #e8951a;
+  --color-bright: #116dff; /* links / secondary */
+  --color-lightblue: #d6eff6; /* section bg / cards */
+  --color-cream: #fff7ec; /* page bg / soft panels */
+  --color-ink: #111111; /* body copy */
+  --color-muted: #949494; /* secondary text / borders */
+
+  --font-display: var(--font-display-face), "Baloo 2", "Quicksand", sans-serif;
+  --font-sans: Arial, Helvetica, sans-serif;
+}
+
+:root {
+  --background: var(--color-cream);
+  --foreground: var(--color-ink);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+a {
+  color: inherit;
+}
