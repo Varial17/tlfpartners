@@ -9,11 +9,13 @@ import {
   Radio,
   LayoutDashboard,
   LogOut,
+  PlusCircle,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { cn, initials } from "@/lib/utils";
 
 const nav = [
+  { href: "/new-ticket", label: "New ticket", icon: PlusCircle },
   { href: "/inbox", label: "Inbox", icon: Inbox },
   { href: "/board", label: "Ticket board", icon: Kanban },
   { href: "/knowledge", label: "Knowledge base", icon: BookOpen },
