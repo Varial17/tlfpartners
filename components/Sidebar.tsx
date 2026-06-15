@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Inbox,
   Kanban,
@@ -10,7 +10,6 @@ import {
   LayoutDashboard,
   LogOut,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
 import { Logo } from "@/components/Logo";
 import { cn, initials } from "@/lib/utils";
 
@@ -22,8 +21,20 @@ const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
 ];
 
-export function Sidebar({ user }: { user?: { name?: string | null; email?: string | null } }) {
+export function Sidebar({
+  user,
+}: {
+  user?: { name?: string | null; email?: string | null };
+}) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function signOut() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  }
+
   return (
     <aside className="flex w-60 shrink-0 flex-col bg-navy text-cream">
       <div className="px-5 py-5 border-b border-white/10">
@@ -63,7 +74,7 @@ export function Sidebar({ user }: { user?: { name?: string | null; email?: strin
             </div>
           </div>
           <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
+            onClick={signOut}
             className="rounded-lg p-1.5 text-cream/70 hover:bg-white/10 hover:text-cream"
             title="Sign out"
           >

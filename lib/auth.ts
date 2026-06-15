@@ -1,58 +1,43 @@
-import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
+import { createClient } from "@/lib/supabase/server";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  trustHost: true,
-  session: { strategy: "jwt" },
-  pages: { signIn: "/login" },
-  providers: [
-    Credentials({
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(creds) {
-        const email = String(creds?.email ?? "").toLowerCase().trim();
-        const password = String(creds?.password ?? "");
-        if (!email || !password) return null;
+export type AppSession = {
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    role: "staff" | "admin";
+  };
+};
 
-        const [user] = await db
-          .select()
-          .from(users)
-          .where(eq(users.email, email))
-          .limit(1);
-        if (!user) return null;
+export async function auth(): Promise<AppSession | null> {
+  const supabase = await createClient();
+  const {
+    data: { user: authUser },
+    error,
+  } = await supabase.auth.getUser();
 
-        const ok = await bcrypt.compare(password, user.passwordHash);
-        if (!ok) return null;
+  if (error || !authUser?.email) return null;
 
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        };
-      },
-    }),
-  ],
-  callbacks: {
-    jwt({ token, user }) {
-      if (user) {
-        token.id = user.id as string;
-        token.role = (user as { role?: string }).role ?? "staff";
-      }
-      return token;
+  const email = authUser.email.toLowerCase();
+  const [profile] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+
+  return {
+    user: {
+      id: profile?.id ?? authUser.id,
+      name:
+        profile?.name ??
+        (typeof authUser.user_metadata?.name === "string"
+          ? authUser.user_metadata.name
+          : null),
+      email,
+      role: profile?.role ?? "staff",
     },
-    session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        (session.user as { role?: string }).role = token.role as string;
-      }
-      return session;
-    },
-  },
-});
+  };
+}

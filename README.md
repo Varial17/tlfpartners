@@ -13,8 +13,8 @@ confidence score. A staff member reviews, edits, regenerates, escalates, and
 - **Supabase Postgres + pgvector** via **Drizzle ORM**
 - **Anthropic Claude** (`claude-opus-4-8`) for drafting + **OpenAI** embeddings
   (`text-embedding-3-small`), behind a swappable `lib/ai` service layer
-- **NextAuth** (Credentials) seeded login; knowledge uploads are parsed and
-  stored directly in Supabase Postgres
+- **Supabase Auth** native email/password login and account creation; knowledge
+  uploads are parsed and stored directly in Supabase Postgres
 
 > The AI layer **degrades gracefully without API keys** — embeddings fall back to
 > a deterministic local vector and drafting to a grounded template — so the inbox
@@ -27,7 +27,8 @@ confidence score. A staff member reviews, edits, regenerates, escalates, and
    ```bash
    cp .env.example .env.local
    ```
-   At minimum set `DATABASE_URL` (Supabase) and `AUTH_SECRET` (`openssl rand -base64 32`).
+   At minimum set `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, and
+   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
    Add `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` for live AI.
 
 2. Install, apply schema (creates the `vector` extension + tables), seed:
@@ -58,7 +59,11 @@ Channels (mock) · Dashboard.
 ## Production connections
 
 - **Database:** Supabase Postgres with `pgvector`, exposed through `DATABASE_URL`.
-- **Auth:** a strong `AUTH_SECRET` and the deployed `NEXTAUTH_URL`.
+- **Auth:** `NEXT_PUBLIC_SUPABASE_URL` and
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for the same Supabase project. In the
+  Supabase dashboard, set the Site URL to your Vercel URL and configure the
+  confirmation email link as:
+  `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email`.
 - **Drafting:** `ANTHROPIC_API_KEY` for Claude draft generation.
 - **Embeddings:** `OPENAI_API_KEY` for semantic knowledge retrieval.
 - **Uploads:** no separate blob store is required; uploads are extracted,
