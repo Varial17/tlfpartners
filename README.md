@@ -13,7 +13,8 @@ confidence score. A staff member reviews, edits, regenerates, escalates, and
 - **Supabase Postgres + pgvector** via **Drizzle ORM**
 - **Anthropic Claude** (`claude-opus-4-8`) for drafting + **OpenAI** embeddings
   (`text-embedding-3-small`), behind a swappable `lib/ai` service layer
-- **NextAuth** (Credentials) seeded login; **Vercel Blob** for uploaded docs
+- **NextAuth** (Credentials) seeded login; knowledge uploads are parsed and
+  stored directly in Supabase Postgres
 
 > The AI layer **degrades gracefully without API keys** — embeddings fall back to
 > a deterministic local vector and drafting to a grounded template — so the inbox
@@ -60,7 +61,8 @@ Channels (mock) · Dashboard.
 - **Auth:** a strong `AUTH_SECRET` and the deployed `NEXTAUTH_URL`.
 - **Drafting:** `ANTHROPIC_API_KEY` for Claude draft generation.
 - **Embeddings:** `OPENAI_API_KEY` for semantic knowledge retrieval.
-- **Uploads:** `BLOB_READ_WRITE_TOKEN` for Vercel Blob-backed knowledge files.
+- **Uploads:** no separate blob store is required; uploads are extracted,
+  chunked, embedded, and stored in Supabase Postgres.
 - **Real channels:** connect email, phone/SMS, and chat providers when moving
   beyond mocked inbound conversations.
 - **Firm knowledge:** replace the seeded SOP/FAQ placeholders with Gary's real

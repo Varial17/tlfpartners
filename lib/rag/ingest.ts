@@ -30,18 +30,16 @@ export async function extractText(
 
 /**
  * Chunk -> embed -> store. Updates the source row's status & chunk count.
- * Used both by the upload API (with a blobUrl) and the seed script (text only).
+ * Used both by the upload API and the seed script.
  */
 export async function ingestText(opts: {
   filename: string;
   text: string;
-  blobUrl?: string | null;
 }): Promise<{ sourceId: string; chunkCount: number }> {
   const [source] = await db
     .insert(knowledgeSources)
     .values({
       filename: opts.filename,
-      blobUrl: opts.blobUrl ?? null,
       status: "processing",
     })
     .returning();

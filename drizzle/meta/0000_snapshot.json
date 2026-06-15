@@ -371,12 +371,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "blob_url": {
-          "name": "blob_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "status": {
           "name": "status",
           "type": "source_status",

@@ -1,4 +1,4 @@
-CREATE EXTENSION IF NOT EXISTS vector;--> statement-breakpoint
+CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA extensions;--> statement-breakpoint
 CREATE TYPE "public"."channel" AS ENUM('email', 'phone', 'chat');--> statement-breakpoint
 CREATE TYPE "public"."client_type" AS ENUM('smsf', 'business', 'individual');--> statement-breakpoint
 CREATE TYPE "public"."conversation_status" AS ENUM('new', 'drafted', 'awaiting_review', 'sent', 'resolved');--> statement-breakpoint
@@ -47,14 +47,13 @@ CREATE TABLE "knowledge_chunks" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"source_id" uuid NOT NULL,
 	"text" text NOT NULL,
-	"embedding" vector(1536),
+	"embedding" extensions.vector(1536),
 	"metadata" jsonb
 );
 --> statement-breakpoint
 CREATE TABLE "knowledge_sources" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"filename" text NOT NULL,
-	"blob_url" text,
 	"status" "source_status" DEFAULT 'processing' NOT NULL,
 	"chunk_count" integer DEFAULT 0 NOT NULL,
 	"error" text,
@@ -86,4 +85,20 @@ ALTER TABLE "drafts" ADD CONSTRAINT "drafts_conversation_id_conversations_id_fk"
 ALTER TABLE "drafts" ADD CONSTRAINT "drafts_message_id_messages_id_fk" FOREIGN KEY ("message_id") REFERENCES "public"."messages"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "knowledge_chunks" ADD CONSTRAINT "knowledge_chunks_source_id_knowledge_sources_id_fk" FOREIGN KEY ("source_id") REFERENCES "public"."knowledge_sources"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "messages" ADD CONSTRAINT "messages_conversation_id_conversations_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "public"."conversations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "knowledge_chunks_embedding_idx" ON "knowledge_chunks" USING hnsw ("embedding" vector_cosine_ops);
+CREATE INDEX "knowledge_chunks_embedding_idx" ON "knowledge_chunks" USING hnsw ("embedding" extensions.vector_cosine_ops);
+--> statement-breakpoint
+CREATE INDEX "conversations_client_id_idx" ON "conversations" ("client_id");--> statement-breakpoint
+CREATE INDEX "conversations_assignee_id_idx" ON "conversations" ("assignee_id");--> statement-breakpoint
+CREATE INDEX "conversations_status_idx" ON "conversations" ("status");--> statement-breakpoint
+CREATE INDEX "conversations_updated_at_idx" ON "conversations" ("updated_at");--> statement-breakpoint
+CREATE INDEX "messages_conversation_created_idx" ON "messages" ("conversation_id","created_at");--> statement-breakpoint
+CREATE INDEX "drafts_conversation_status_created_idx" ON "drafts" ("conversation_id","status","created_at");--> statement-breakpoint
+CREATE INDEX "drafts_message_id_idx" ON "drafts" ("message_id");--> statement-breakpoint
+CREATE INDEX "knowledge_chunks_source_id_idx" ON "knowledge_chunks" ("source_id");--> statement-breakpoint
+ALTER TABLE "clients" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "users" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "conversations" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "messages" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "drafts" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "knowledge_sources" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "knowledge_chunks" ENABLE ROW LEVEL SECURITY;
