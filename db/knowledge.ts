@@ -2,6 +2,16 @@
 // Gary supplies the real 60-page SOP + FAQ set (PRD §10). Written so the seeded
 // conversations have something concrete to ground against.
 
+import { readFileSync } from "fs";
+import { join } from "path";
+
+// Richer advisory/technical knowledge (Division 296, NALI, Div 7A, CGT, etc.)
+// kept as an editable Markdown file so it can also be uploaded via the UI.
+export const ADVISORY_DOC = {
+  filename: "TLF Partners — Advisory & Technical Knowledge.md",
+  text: readFileSync(join(process.cwd(), "knowledge/TLF-Advisory-Knowledge.md"), "utf8"),
+};
+
 export const SOP_DOC = {
   filename: "TLF Partners — SOP (excerpt).md",
   text: `TLF PARTNERS STANDARD OPERATING PROCEDURES (EXCERPT)

@@ -15,7 +15,7 @@ import {
 } from "@/lib/db/schema";
 import { ingestText } from "@/lib/rag/ingest";
 import { generateDraftForConversation } from "@/lib/draft-service";
-import { SOP_DOC, FAQ_DOC } from "./knowledge";
+import { SOP_DOC, FAQ_DOC, ADVISORY_DOC } from "./knowledge";
 
 type Channel = "email" | "phone" | "chat";
 type Lifecycle = "new" | "review" | "sent" | "sent_edited" | "low";
@@ -66,7 +66,13 @@ async function main() {
   // 4. Knowledge base.
   const sop = await ingestText({ filename: SOP_DOC.filename, text: SOP_DOC.text });
   const faq = await ingestText({ filename: FAQ_DOC.filename, text: FAQ_DOC.text });
-  console.log(`  KB ingested: ${sop.chunkCount + faq.chunkCount} chunks`);
+  const advisory = await ingestText({
+    filename: ADVISORY_DOC.filename,
+    text: ADVISORY_DOC.text,
+  });
+  console.log(
+    `  KB ingested: ${sop.chunkCount + faq.chunkCount + advisory.chunkCount} chunks`,
+  );
 
   // 5. Conversations.
   const ci = (n: number) => clientRows[n].id;
