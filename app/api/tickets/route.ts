@@ -39,11 +39,25 @@ export async function POST(req: Request) {
     assigneeId?: string;
   };
 
-  if (!channel || !subject?.trim() || !message?.trim()) {
+  if (!channel || !message?.trim()) {
     return NextResponse.json(
-      { error: "Channel, subject, and message are required." },
+      { error: "Channel and message are required." },
       { status: 400 },
     );
+  }
+
+  // Email needs a subject; phone/chat don't — derive one from the message.
+  let resolvedSubject = subject?.trim() ?? "";
+  if (!resolvedSubject) {
+    if (channel === "email") {
+      return NextResponse.json(
+        { error: "Subject is required for email." },
+        { status: 400 },
+      );
+    }
+    const firstLine = message.trim().split("\n")[0];
+    resolvedSubject =
+      firstLine.length > 60 ? `${firstLine.slice(0, 57)}…` : firstLine;
   }
 
   try {
@@ -72,7 +86,7 @@ export async function POST(req: Request) {
       .values({
         clientId: resolvedClientId,
         channel,
-        subject: subject.trim(),
+        subject: resolvedSubject,
         priority: priority ?? "normal",
         assigneeId: assigneeId || session.user.id,
         status: "new",
@@ -86,10 +100,21 @@ export async function POST(req: Request) {
       channel,
     });
 
-    // Generate the AI draft reply (RAG-grounded) right away.
-    await generateDraftForConversation(conv.id);
+    // Generate the AI draft reply (RAG-grounded). If drafting fails, still
+    // return the ticket — the user can hit "Generate draft" on the conversation.
+    let draftError: string | null = null;
+    try {
+      await generateDraftForConversation(conv.id);
+    } catch (err) {
+      console.error("[tickets] draft generation failed:", err);
+      draftError = "Ticket created, but the AI draft failed — open it and click Generate draft.";
+    }
 
-    return NextResponse.json({ ok: true, conversationId: conv.id });
+    return NextResponse.json({
+      ok: true,
+      conversationId: conv.id,
+      draftError,
+    });
   } catch (err) {
     console.error("[tickets] failed:", err);
     return NextResponse.json(

@@ -39,15 +39,25 @@ function localEmbed(text: string): number[] {
 
 export async function embed(text: string): Promise<number[]> {
   if (!hasEmbeddings) return localEmbed(text);
-  const res = await openai().embeddings.create({ model: MODEL, input: text });
-  return res.data[0].embedding;
+  try {
+    const res = await openai().embeddings.create({ model: MODEL, input: text });
+    return res.data[0].embedding;
+  } catch (err) {
+    // A bad key / quota / billing error must not crash retrieval or drafting —
+    // fall back to the local embedding so the app keeps working.
+    console.error("[embed] OpenAI failed, using local fallback:", err);
+    return localEmbed(text);
+  }
 }
 
 export async function embedBatch(texts: string[]): Promise<number[][]> {
   if (texts.length === 0) return [];
   if (!hasEmbeddings) return texts.map(localEmbed);
-  const res = await openai().embeddings.create({ model: MODEL, input: texts });
-  return res.data
-    .sort((a, b) => a.index - b.index)
-    .map((d) => d.embedding);
+  try {
+    const res = await openai().embeddings.create({ model: MODEL, input: texts });
+    return res.data.sort((a, b) => a.index - b.index).map((d) => d.embedding);
+  } catch (err) {
+    console.error("[embedBatch] OpenAI failed, using local fallback:", err);
+    return texts.map(localEmbed);
+  }
 }

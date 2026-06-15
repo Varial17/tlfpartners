@@ -159,16 +159,20 @@ export function NewTicketForm({
             </div>
           )}
 
-          {/* Subject */}
+          {/* Subject — only required for email; SMS/chat have no subject line */}
           <div>
             <label className="mb-1.5 block text-sm font-medium text-navy">
-              Subject
+              Subject{channel === "email" ? "" : " (optional)"}
             </label>
             <Input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="e.g. When is my BAS due?"
-              required
+              placeholder={
+                channel === "email"
+                  ? "e.g. When is my BAS due?"
+                  : "Leave blank to use the message"
+              }
+              required={channel === "email"}
             />
           </div>
 
