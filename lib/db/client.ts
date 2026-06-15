@@ -1,28 +1,47 @@
-import { drizzle } from "drizzle-orm/postgres-js";
+import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
 
-const connectionString = process.env.DATABASE_URL;
+type DB = PostgresJsDatabase<typeof schema>;
 
-if (!connectionString) {
-  // Fail loudly at first DB use rather than at import time, so the app can
-  // still build / render static pages before a database is provisioned.
-  console.warn("[db] DATABASE_URL is not set — database calls will fail.");
-}
-
-// Reuse the client across hot reloads in dev.
+// Reuse across hot reloads / lambda invocations.
 const globalForDb = globalThis as unknown as {
   pgClient?: ReturnType<typeof postgres>;
+  drizzleDb?: DB;
 };
 
-const client =
-  globalForDb.pgClient ??
-  postgres(connectionString ?? "postgres://invalid", {
-    prepare: false,
-    max: 5,
-  });
+// Lazily construct the client on first query — NOT at module import. This keeps
+// `next build` (which evaluates route modules during page-data collection) from
+// parsing DATABASE_URL, so a missing/malformed connection string can't fail the
+// build. Any connection problem then surfaces at request time, where callers
+// already handle it gracefully.
+function getDb(): DB {
+  if (globalForDb.drizzleDb) return globalForDb.drizzleDb;
 
-if (process.env.NODE_ENV !== "production") globalForDb.pgClient = client;
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is not set");
+  }
 
-export const db = drizzle(client, { schema });
+  const client =
+    globalForDb.pgClient ??
+    postgres(connectionString, { prepare: false, max: 5 });
+
+  if (process.env.NODE_ENV !== "production") globalForDb.pgClient = client;
+
+  const instance = drizzle(client, { schema });
+  globalForDb.drizzleDb = instance;
+  return instance;
+}
+
+// A thin proxy so existing `db.select()/insert()/execute()` call sites keep
+// working while construction stays deferred to first use.
+export const db = new Proxy({} as DB, {
+  get(_target, prop, receiver) {
+    const real = getDb() as object;
+    const value = Reflect.get(real, prop, receiver);
+    return typeof value === "function" ? value.bind(real) : value;
+  },
+});
+
 export { schema };
