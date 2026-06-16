@@ -302,10 +302,11 @@ function Thread({
   clientName,
 }: {
   thread: Message[];
-  channel: "email" | "phone" | "chat";
+  channel: string;
   clientName: string;
 }) {
-  const bubbles = channel !== "email";
+  // SMS / chat render as bubbles; email and call notes render as cards.
+  const bubbles = channel === "sms" || channel === "chat" || channel === "phone";
   return (
     <div className="space-y-3">
       {thread.map((m) => {

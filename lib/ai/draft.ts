@@ -48,10 +48,21 @@ function fallbackDraft(ctx: DraftContext): DraftResult {
   }
 
   const summary = first.text.replace(/\s+/g, " ").trim().slice(0, 320);
-  const body =
-    ctx.channel === "chat"
-      ? `${greeting} ${summary} Let me know if you'd like more detail. — TLF Partners`
-      : `${greeting}\n\nThanks for reaching out about "${ctx.subject}". ${summary}\n\nPlease let me know if you'd like me to go into more detail or help with the next steps.\n\n${signoff}`;
+  const firstName = ctx.clientName.split(" ")[0] || "there";
+  let body: string;
+  switch (ctx.channel) {
+    case "sms":
+      body = `Hi ${firstName}, ${summary.slice(0, 240)} Reply if you'd like more detail.`;
+      break;
+    case "chat":
+      body = `${greeting} ${summary} Let me know if you'd like more detail. — TLF Partners`;
+      break;
+    case "call":
+      body = `Call-back script for ${ctx.clientName}:\n- Opener: "Hi ${firstName}, it's the team at TLF Partners returning your call about ${ctx.subject}."\n- Key point: ${summary}\n- Next step: confirm the details and offer to follow up in writing.`;
+      break;
+    default: // email / phone (legacy)
+      body = `${greeting}\n\nThanks for reaching out about "${ctx.subject}". ${summary}\n\nPlease let me know if you'd like me to go into more detail or help with the next steps.\n\n${signoff}`;
+  }
 
   // Confidence tracks retrieval strength so weak matches surface as low-confidence.
   const confidence = Math.max(0.25, Math.min(0.9, 0.4 + first.similarity));

@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
   conversations,
@@ -50,18 +50,26 @@ export async function generateDraftForConversation(
     .where(eq(clients.id, conv.clientId))
     .limit(1);
 
-  const [inbound] = await db
+  // Full thread (oldest first) so the model has prior context for continuity.
+  const thread = await db
     .select()
     .from(messages)
-    .where(
-      and(
-        eq(messages.conversationId, conversationId),
-        eq(messages.direction, "inbound"),
-      ),
-    )
-    .orderBy(desc(messages.createdAt))
-    .limit(1);
-  if (!inbound) throw new Error("No inbound message to reply to");
+    .where(eq(messages.conversationId, conversationId))
+    .orderBy(messages.createdAt);
+
+  // Reply to the most recent inbound message; everything before it is history.
+  let inboundIdx = -1;
+  for (let i = thread.length - 1; i >= 0; i--) {
+    if (thread[i].direction === "inbound") {
+      inboundIdx = i;
+      break;
+    }
+  }
+  if (inboundIdx === -1) throw new Error("No inbound message to reply to");
+  const inbound = thread[inboundIdx];
+  const history = thread
+    .slice(0, inboundIdx)
+    .map((m) => ({ direction: m.direction, body: m.body }));
 
   const query = [conv.subject, inbound.body, client?.type ?? ""]
     .filter(Boolean)
@@ -77,6 +85,7 @@ export async function generateDraftForConversation(
     inboundBody: inbound.body,
     chunks,
     instruction,
+    history,
   });
 
   const citations = toCitations(chunks, result.usedChunkIds);

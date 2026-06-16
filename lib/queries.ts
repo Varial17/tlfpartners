@@ -13,7 +13,7 @@ export type InboxRow = {
   subject: string;
   status: string;
   priority: string;
-  channel: "email" | "phone" | "chat";
+  channel: "email" | "phone" | "chat" | "sms" | "call";
   updatedAt: Date | null;
   clientName: string;
   clientType: string;

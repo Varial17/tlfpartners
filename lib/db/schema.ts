@@ -19,7 +19,14 @@ export const clientType = pgEnum("client_type", [
   "business",
   "individual",
 ]);
-export const channel = pgEnum("channel", ["email", "phone", "chat"]);
+// "phone" is retained for legacy rows; new tickets use sms / call.
+export const channel = pgEnum("channel", [
+  "email",
+  "phone",
+  "chat",
+  "sms",
+  "call",
+]);
 export const conversationStatus = pgEnum("conversation_status", [
   "new",
   "drafted",

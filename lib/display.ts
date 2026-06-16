@@ -1,10 +1,17 @@
-import { Mail, Phone, MessageSquare } from "lucide-react";
+import { Mail, Phone, MessageSquare, MessageCircle, Smartphone } from "lucide-react";
 
-export const channelMeta = {
+export type Channel = "email" | "phone" | "chat" | "sms" | "call";
+
+export const channelMeta: Record<
+  string,
+  { label: string; icon: typeof Mail }
+> = {
   email: { label: "Email", icon: Mail },
-  phone: { label: "Phone / SMS", icon: Phone },
-  chat: { label: "Chat", icon: MessageSquare },
-} as const;
+  sms: { label: "SMS", icon: Smartphone },
+  chat: { label: "Chat", icon: MessageCircle },
+  call: { label: "Call", icon: Phone },
+  phone: { label: "Phone / SMS", icon: MessageSquare }, // legacy rows
+};
 
 export const statusMeta: Record<
   string,

@@ -2,18 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Phone, MessageSquare, Sparkles, Loader2 } from "lucide-react";
+import { Mail, Phone, MessageCircle, Smartphone, Sparkles, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Select } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 
-type Channel = "email" | "phone" | "chat";
+type Channel = "email" | "sms" | "chat" | "call";
 
 const channelOptions: { value: Channel; label: string; icon: typeof Mail }[] = [
   { value: "email", label: "Email", icon: Mail },
-  { value: "phone", label: "Phone / SMS", icon: Phone },
-  { value: "chat", label: "Chat", icon: MessageSquare },
+  { value: "sms", label: "SMS", icon: Smartphone },
+  { value: "chat", label: "Chat", icon: MessageCircle },
+  { value: "call", label: "Call", icon: Phone },
 ];
 
 export function NewTicketForm({
@@ -85,7 +86,7 @@ export function NewTicketForm({
             <label className="mb-1.5 block text-sm font-medium text-navy">
               Channel
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {channelOptions.map(({ value, label, icon: Icon }) => (
                 <button
                   key={value}
